@@ -1,6 +1,6 @@
 {
   "name": "@stopsopa/dotenv-up",
-  "version": "1.0.23",
+  "version": "1.0.24",
   "description": "dotenv but it also search through parent directories",
   "main": "index.js",
   "scripts": {
