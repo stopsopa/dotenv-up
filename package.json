@@ -1,0 +1,14 @@
+{
+  "name": "@stopsopa/dotenv-up",
+  "version": "1.0.23",
+  "description": "dotenv but it also search through parent directories",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "dotenv"
+  ],
+  "author": "Szymon Dzialowski",
+  "license": "MIT"
+}
