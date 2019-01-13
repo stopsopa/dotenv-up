@@ -1,6 +1,6 @@
 {
   "name": "dotenv-up",
-  "version": "1.0.25",
+  "version": "1.0.26",
   "description": "dotenv but it also search through parent directories",
   "main": "index.js",
   "scripts": {
