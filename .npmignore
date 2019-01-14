@@ -2,3 +2,7 @@ Makefile
 /.idea/
 /test
 /.env
+node_modules
+yarn.lock
+/update.sh
+*.tgz

@@ -219,10 +219,10 @@ const dotenv = (function () {
 
 /**
  * Use like
- *     require('@stopsopa/dotenv-up')(2); // 2 - default assigned to 'deep' parameter
- *     require('@stopsopa/dotenv-up')(2, false);
- *     require('@stopsopa/dotenv-up')(2, false, 'name of load');
- *     require('@stopsopa/dotenv-up')({
+ *     require('dotenv-up')(2); // 2 - default assigned to 'deep' parameter
+ *     require('dotenv-up')(2, false);
+ *     require('dotenv-up')(2, false, 'name of load');
+ *     require('dotenv-up')({
             path        = process.cwd(),
             envfile     = '.env',
             override    = true, // override values in process.env
