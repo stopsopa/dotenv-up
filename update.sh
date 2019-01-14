@@ -50,7 +50,7 @@ DIFF="$(trim "$DIFF")"
 
 if [ "$DIFF" != "" ] || [ "$1" = "force" ]; then
 
-    git push $ORIGIN $REMOTEBRANCH --tags
+    git push $ORIGIN $REMOTEBRANCH
 
     if [ "$?" != "0" ]; then
 
@@ -74,7 +74,7 @@ if [ "$DIFF" != "" ] || [ "$1" = "force" ]; then
                             # git add examples.es5.js
                             #git commit --amend --no-edit
 
-    git push $ORIGIN $REMOTEBRANCH
+    git push $ORIGIN $REMOTEBRANCH --tags
 
     if [ "$?" = "0" ]; then
 
