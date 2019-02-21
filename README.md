@@ -3,8 +3,13 @@
 
 # Reference
 
+```bash
     yarn add dotenv-up
-    
+```    
+
+then in js:
+
+```javascript
     require('dotenv-up')(3, true, 'sandbox/server.js');
     
     /**
@@ -25,6 +30,7 @@
      * @param name
      * @returns {} - object with all extracted variables
      */
+```
 
 # Docker use
 
