@@ -25,7 +25,23 @@
      * @param name
      * @returns {} - object with all extracted variables
      */
-     
+
+# Docker use
+
+```javascript
+
+require('dotenv-up')({
+    override    : false, // don't override existing parameters in process.env by those from .env file
+    deep        : 3,
+}, true, 'sandbox/server.js');
+
+// instead of:
+
+require('dotenv-up')(3, true, 'sandbox/server.js');
+// because 'override' flag is by default true
+
+```
+
 # Tip
 
 If you need to include other file that use internally again dotenv-up tool in override mode but you don't want those changes of process.env affect proce.env in you'r scope, do:
