@@ -10,8 +10,8 @@
     /**
      * Use like
      *     require('dotenv-up')(2); // 2 - default assigned to 'deep' parameter
-     *     require('dotenv-up')(2, false);
-     *     require('dotenv-up')(2, false, 'name of load');
+     *     require('dotenv-up')(2, false); // second param is "debug" flag - to show on not show each step on the screen
+     *     require('dotenv-up')(2, false, 'name of load'); // plain text to describe individual use of this library
      *     require('dotenv-up')({
                 path        = process.cwd(),
                 envfile     = '.env',
