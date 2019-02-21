@@ -1,13 +1,13 @@
 [![npm version](https://badge.fury.io/js/dotenv-up.svg)](https://badge.fury.io/js/dotenv-up)
 [![NpmLicense](https://img.shields.io/npm/l/dotenv-up.svg)](https://github.com/stopsopa/dotenv-up/blob/master/LICENSE)
 
-# Reference
+# Installation
 
 ```bash
     yarn add dotenv-up
 ```    
 
-then in js:
+# Reference
 
 ```javascript
     require('dotenv-up')(3, true, 'sandbox/server.js');
