@@ -48,6 +48,10 @@ require('dotenv-up')(3, true, 'sandbox/server.js');
 
 ```
 
+# Todo
+
+- [ ] Early detection of spaces around "=" https://imgur.com/a/wWml96T 
+
 # Tip
 
 If you need to include other file that use internally again dotenv-up tool in override mode but you don't want those changes of process.env affect proce.env in you'r scope, do:
