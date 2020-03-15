@@ -9,6 +9,9 @@ const _stack    = require('./stack');
 
 // const log       = console.log;
 
+function th(msg) {
+    return new Error(`dotenv-up error: ${msg}`);
+}
 
 function log (message /*: string */, addnewline = false) {
     // console.log(`[dotenv][DEBUG] ${message}`)
@@ -146,9 +149,9 @@ const dotenv = (function () {
 
         if (notMatched.length) {
 
-            throw `Lines with invalid syntax: \n` + notMatched.map(x => {
+            throw th(`Lines with invalid syntax: \n` + notMatched.map(x => {
                 return x.join(': >') + '<';
-            }).join("\n");
+            }).join("\n"));
         }
 
         return obj
@@ -203,7 +206,7 @@ const dotenv = (function () {
 
             return { parsed }
         } catch (e) {
-            throw `[dotenv][DEBUG] error, parsing file '${dotenvPath}', label '${options.name}', error: ` + (e + '');
+            throw th(`[dotenv][DEBUG] error, parsing file '${dotenvPath}', label '${options.name}', error: ` + (e + ''));
         }
     }
 
@@ -246,11 +249,12 @@ module.exports = (opt = {}, debug = true, name) => {
 
     // console.log('_stack()', _stack())
 
-    const {
-        path        = pa.dirname(_stack()[2]),
-        envfile     = '.env',
-        override    = true,
-        deep        = 1,
+    let {
+        path            = pa.dirname(_stack()[2]),
+        envfile         = '.env',
+        override        = true,
+        deep            = 1,
+        startfromlevel  = 0,
         ...rest
     } = opt;
 
@@ -259,6 +263,20 @@ module.exports = (opt = {}, debug = true, name) => {
         debug && log(`dotenv-up [${deep}]: '${name}'`, true);
     }
 
+    if ( ! Number.isInteger(startfromlevel) || startfromlevel < 0 ) {
+
+        throw th(`startfromlevel should be integer >= 0 but it is: ${startfromlevel}`);
+    }
+
+    if ( ! Number.isInteger(deep) || deep < 0 ) {
+
+        throw th(`deep should be integer >= 0 but it is: ${deep}`);
+    }
+
+    if ( ! (deep > startfromlevel) ) {
+
+        throw th(`deep(${deep}) should be bigger than startfromlevel(${startfromlevel})`);
+    }
 
     if (debug === false) {
 
@@ -271,15 +289,13 @@ module.exports = (opt = {}, debug = true, name) => {
 
     let p = path;
 
-    let i = 0;
-
     const stack = [];
 
-    while (i < deep) {
+    while (startfromlevel < deep) {
 
         let pp = p;
 
-        for (let k = 0 ; k < i ; k += 1 ) {
+        for (let k = 0 ; k < startfromlevel ; k += 1 ) {
 
             pp = pa.dirname(pp);
         }
@@ -305,8 +321,8 @@ module.exports = (opt = {}, debug = true, name) => {
             }).parsed
         }
 
-        i += 1;
+        startfromlevel += 1;
     }
 
-    throw `dotenv-up '${name}': didn't found '${envfile}' under any of those paths: ` + JSON.stringify(stack, null, 4);
+    throw th(`'${name}': didn't found '${envfile}' under any of those paths: ` + JSON.stringify(stack, null, 4));
 }

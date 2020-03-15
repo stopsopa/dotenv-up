@@ -13,10 +13,11 @@
      *     require('dotenv-up')(2, false);
      *     require('dotenv-up')(2, false, 'name of load');
      *     require('dotenv-up')({
-                path        = process.cwd(),
-                envfile     = '.env',
-                override    = true, // override values in process.env
-                deep        = 1,
+                path            = process.cwd(),
+                envfile         = '.env',
+                override        = true, // override values in process.env
+                deep            = 1,
+                startfromlevel  = 0,
                 ... other dotenv options https://www.npmjs.com/package/dotenv
      *     });
      *
