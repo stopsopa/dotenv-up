@@ -1,10 +1,24 @@
 
 // require('../../index')(3, true, 'test.js');
 
-require('../../../../index')({
+const dotenv = require('../../../../index');
+
+const first = dotenv({
     override        : false, // don't override existing parameters in process.env by those from .env file
     deep            : 4,
     // startfromlevel  : 3,
-}, true, 'sandbox/server.js');
+    // justreturn: true
+}, true, 'first')
 
-console.log(JSON.stringify(process.env, null, 4));
+const second = dotenv({
+    override        : false, // don't override existing parameters in process.env by those from .env file
+    deep            : 5,
+    startfromlevel  : 4,
+    // justreturn: true
+}, true, 'second')
+
+console.log(JSON.stringify({
+    first,
+    second,
+    'process.env': process.env
+}, null, 4));

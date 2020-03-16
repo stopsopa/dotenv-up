@@ -158,33 +158,34 @@ const dotenv = (function () {
     }
 
     // Populates process.env from .env file
-    function config (options /*: ?DotenvConfigOptions */) /*: DotenvConfigOutput */ {
-        let dotenvPath = pa.resolve(process.cwd(), '.env')
-        let encoding /*: string */ = 'utf8'
-        let debug = false
+    function config (opt /*: ?DotenvConfigOptions */) /*: DotenvConfigOutput */ {
 
-        if (options) {
-            if (options.path != null) {
-                dotenvPath = options.path
-            }
-            if (options.encoding != null) {
-                encoding = options.encoding
-            }
-            if (options.debug != null) {
-                debug = true
-            }
-        }
+        let {
+            path        = pa.resolve(process.cwd(), '.env'),
+            encoding    = 'utf8',
+            override,
+            name,
+            debug,
+            justreturn,
+        } = opt;
+
+        debug = !!debug;
 
         try {
             // specifying an encoding returns a string instead of a buffer
-            const parsed = parse(fs.readFileSync(dotenvPath, { encoding }), { debug })
+            const parsed = parse(fs.readFileSync(path, { encoding }), { debug });
+
+            if (justreturn) {
+
+                return { parsed };
+            }
 
             Object.keys(parsed).forEach(function (key) {
 
                 if (process.env.hasOwnProperty(key)) {
 
                     // if (dotenv.override) {
-                    if (options.override) {
+                    if (override) {
 
                         process.env[key] = parsed[key];
 
@@ -205,8 +206,10 @@ const dotenv = (function () {
             })
 
             return { parsed }
+
         } catch (e) {
-            throw th(`[dotenv][DEBUG] error, parsing file '${dotenvPath}', label '${options.name}', error: ` + (e + ''));
+
+            throw th(`[dotenv][DEBUG] error, parsing file '${path}', label '${name}', error: ` + String(e));
         }
     }
 
@@ -230,6 +233,7 @@ const dotenv = (function () {
             envfile     = '.env',
             override    = true, // override values in process.env
             deep        = 1,
+            justreturn  = false,
             ... other dotenv options https://www.npmjs.com/package/dotenv
  *     });
  *
@@ -255,8 +259,11 @@ module.exports = (opt = {}, debug = true, name) => {
         override        = true,
         deep            = 1,
         startfromlevel  = 0,
+        justreturn      = false,
         ...rest
     } = opt;
+
+    justreturn = !!justreturn;
 
     if (name) {
 
@@ -318,6 +325,7 @@ module.exports = (opt = {}, debug = true, name) => {
                 path: pp,
                 name,
                 override,
+                justreturn,
             }).parsed
         }
 

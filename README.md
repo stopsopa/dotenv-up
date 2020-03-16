@@ -23,6 +23,7 @@
                 override        = true, // override values in process.env
                 deep            = 1,
                 startfromlevel  = 0,
+                justreturn      = false, // don't add found values to the process.env global object
                 ... other dotenv options https://www.npmjs.com/package/dotenv
      *     });
      *
