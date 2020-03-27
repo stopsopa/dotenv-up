@@ -50,6 +50,37 @@ require('dotenv-up')(3, true, 'sandbox/server.js');
 
 ```
 
+# Stacking config in given order from multiple files 
+
+```javascript
+
+const directly = require.main === module;
+
+require('dotenv-up')({
+    deep            : 2,
+    startfromlevel  : 1,
+}, !directly, 'index.server');
+
+require('dotenv-up')({
+    deep        : 1,
+}, !directly, 'index.server');
+
+if (directly) {
+
+    console.log(JSON.stringify(process.env, null, 4));
+
+    process.exit(0);
+}
+
+module.exports = () => {
+
+    return {
+        origin: "http://localhost:" + process.env.NODE_PORT,
+        delayms: 0.2 * 1000,
+    }
+}
+```
+
 # Todo
 
 - [ ] Early detection of spaces around "=" https://imgur.com/a/wWml96T 
