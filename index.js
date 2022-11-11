@@ -1,21 +1,20 @@
+const pa = require("path");
 
-const pa        = require('path');
+const fs = require("fs");
 
-const fs        = require('fs');
-
-const _stack    = require('./stack');
+const _stack = require("./stack");
 
 // const dotenv    = require('dotenv');
 
 // const log       = console.log;
 
 function th(msg) {
-    return new Error(`dotenv-up error: ${msg}`);
+  return new Error(`dotenv-up error: ${msg}`);
 }
 
-function log (message /*: string */, addnewline = false) {
-    // console.log(`[dotenv][DEBUG] ${message}`)
-    process.stdout.write((addnewline ? "\n": '') + `[dotenv][DEBUG] ${message}\n`)
+function log(message /*: string */, addnewline = false) {
+  // console.log(`[dotenv][DEBUG] ${message}`)
+  process.stdout.write((addnewline ? "\n" : "") + `[dotenv][DEBUG] ${message}\n`);
 }
 
 /**
@@ -24,204 +23,170 @@ function log (message /*: string */, addnewline = false) {
  * Modified version with flag 'override'
  */
 const dotenv = (function () {
+  function trim(s) {
+    return (s || "").replace(/^\s*(\S*(\s+\S+)*)\s*$/, "$1");
+  }
 
-    function trim(s) {
-        return (s || '').replace(/^\s*(\S*(\s+\S+)*)\s*$/,'$1');
+  const tool = {};
+
+  var ranges = (list) => {
+    // const log = console.log;
+
+    let start = false;
+
+    let ranges = [];
+
+    let last = false;
+
+    list.forEach((l) => {
+      if (last === false) {
+        start = last = l;
+
+        // log('start: ', l)
+      } else {
+        if (last + 1 === l) {
+          // log('+1 equal (current: '+l+'): ', last, 'equal: ', (last + 1), l);
+
+          last = l;
+        } else {
+          // log('+1 NOT equal (current: '+l+') start: ', start, 'last: ', last);
+
+          ranges.push([start, last]);
+
+          last = start = l;
+        }
+      }
+    });
+
+    if (start) {
+      ranges.push([start, last]);
     }
 
-    const tool = {};
+    return ranges.map((x) => {
+      if (x[0] === x[1]) {
+        return x[0];
+      } else {
+        return x.join("-");
+      }
+    });
+  };
 
-    var ranges = list => {
+  // Parses src into an Object
+  function parse(src /*: string | Buffer */, options /*: ?DotenvParseOptions */) /*: DotenvParseOutput */ {
+    const debug = Boolean(options && options.debug);
+    const obj = {};
 
-        // const log = console.log;
+    const notMatched = [];
 
-        let start = false;
+    const commented = [];
 
-        let ranges = [];
+    // convert Buffers before splitting into lines and processing
+    src
+      .toString()
+      .split("\n")
+      .forEach(function (line, idx) {
+        // matching "KEY' and 'VAL' in 'KEY=VAL'
 
-        let last = false;
+        // https://stackoverflow.com/a/2821201/5560682
+        const keyValueArr = line.match(/^\s*([a-zA-Z_]+[a-zA-Z0-9_]*)\s*=\s*(.*)?\s*$/i);
+        // matched?
+        if (keyValueArr != null) {
+          const key = keyValueArr[1];
 
-        list.forEach(l => {
+          // default undefined or missing values to empty string
+          let value = keyValueArr[2] || "";
 
-            if (last === false) {
+          // expand newlines in quoted values
+          const len = value ? value.length : 0;
 
-                start = last = l;
+          if (len > 0) {
+            if (
+              (value.charAt(0) === '"' && value.charAt(len - 1) === '"') ||
+              (value.charAt(0) === "'" && value.charAt(len - 1) === "'")
+            ) {
+              value = value.substring(1, len - 1);
 
-                // log('start: ', l)
+              value = value.replace(/\\n/gm, "\n");
             }
-            else {
+          }
 
-                if ( (last + 1) === l) {
+          obj[key] = value;
+        } else {
+          const t = trim(line);
 
-                    // log('+1 equal (current: '+l+'): ', last, 'equal: ', (last + 1), l);
-
-                    last = l;
-                }
-                else {
-
-                    // log('+1 NOT equal (current: '+l+') start: ', start, 'last: ', last);
-
-                    ranges.push([start, last]);
-
-                    last = start = l;
-                }
-            }
-        });
-
-        if (start) {
-
-            ranges.push([start, last]);
+          if ((t || "")[0] === "#" || t.length === 0) {
+            commented.push(idx + 1);
+          } else {
+            notMatched.push([idx + 1, line]);
+          }
+          // log(`did not match key and value when parsing line ${idx + 1}: ${line}`)
         }
+      });
 
-        return ranges.map(x => {
-
-            if (x[0] === x[1]) {
-
-                return x[0];
-            }
-            else {
-
-                return x.join('-');
-            }
-        })
+    if (debug && commented.length) {
+      log(`Commented or empty lines: ` + ranges(commented).join(", "));
     }
 
-// Parses src into an Object
-    function parse (src /*: string | Buffer */, options /*: ?DotenvParseOptions */) /*: DotenvParseOutput */ {
-        const debug = Boolean(options && options.debug)
-        const obj = {}
-
-        const notMatched    = [];
-
-        const commented     = [];
-
-        // convert Buffers before splitting into lines and processing
-        src.toString().split('\n').forEach(function (line, idx) {
-            // matching "KEY' and 'VAL' in 'KEY=VAL'
-
-            // https://stackoverflow.com/a/2821201/5560682
-            const keyValueArr = line.match(/^\s*([a-zA-Z_]+[a-zA-Z0-9_]*)\s*=\s*(.*)?\s*$/i)
-            // matched?
-            if (keyValueArr != null) {
-                const key = keyValueArr[1]
-
-                // default undefined or missing values to empty string
-                let value = keyValueArr[2] || ''
-
-                // expand newlines in quoted values
-                const len = value ? value.length : 0;
-
-                if (len > 0) {
-
-                    if (
-                        (value.charAt(0) === '"' && value.charAt(len - 1) === '"') ||
-                        (value.charAt(0) === "'" && value.charAt(len - 1) === "'")
-                    ) {
-
-                        value = value.substring(1, len - 1)
-
-                        value = value.replace(/\\n/gm, '\n')
-                    }
-                }
-
-                obj[key] = value
-            }
-            else {
-
-                const t = trim(line);
-
-                if ((t || '')[0] === '#' || t.length === 0) {
-
-                    commented.push(idx + 1);
-                }
-                else {
-
-                    notMatched.push([idx + 1, line]);
-                }
-                // log(`did not match key and value when parsing line ${idx + 1}: ${line}`)
-            }
-        });
-
-        if (debug && commented.length) {
-
-            log(`Commented or empty lines: ` + ranges(commented).join(', '));
-        }
-
-        if (notMatched.length) {
-
-            throw th(`Lines with invalid syntax: \n` + notMatched.map(x => {
-                return x.join(': >') + '<';
-            }).join("\n"));
-        }
-
-        return obj
-    }
-
-    // Populates process.env from .env file
-    function config (opt /*: ?DotenvConfigOptions */) /*: DotenvConfigOutput */ {
-
-        let {
-            path        = pa.resolve(process.cwd(), '.env'),
-            encoding    = 'utf8',
-            override,
-            name,
-            debug,
-            justreturn,
-        } = opt;
-
-        debug = !!debug;
-
-        try {
-            // specifying an encoding returns a string instead of a buffer
-            const parsed = parse(fs.readFileSync(path, { encoding }), { debug });
-
-            if (justreturn) {
-
-                return { parsed };
-            }
-
-            Object.keys(parsed).forEach(function (key) {
-
-                if (process.env.hasOwnProperty(key)) {
-
-                    // if (dotenv.override) {
-                    if (override) {
-
-                        process.env[key] = parsed[key];
-
-                        debug && log(`"${key}" with value "${parsed[key]}" was OVERWRITTEN in \`process.env\``)
-
-                    } else {
-
-                        debug && log(`"${key}" is already defined in \`process.env\` and will NOT be OVERWRITTEN (to force use flag 'override = true')`)
-                    }
-                }
-                else {
-
-                    process.env[key] = parsed[key];
-
-                    debug && log(`"${key}" with value "${parsed[key]}" in \`process.env\` was created`);
-                }
-
+    if (notMatched.length) {
+      throw th(
+        `Lines with invalid syntax: \n` +
+          notMatched
+            .map((x) => {
+              return x.join(": >") + "<";
             })
-
-            return { parsed }
-
-        } catch (e) {
-
-            throw th(`[dotenv][DEBUG] error, parsing file '${path}', label '${name}', error: ` + String(e));
-        }
+            .join("\n")
+      );
     }
 
-    tool.config     = config;
-    tool.load       = config;
-    tool.parse      = parse;
+    return obj;
+  }
 
-    return tool;
-}());
+  // Populates process.env from .env file
+  function config(opt /*: ?DotenvConfigOptions */) /*: DotenvConfigOutput */ {
+    let { path = pa.resolve(process.cwd(), ".env"), encoding = "utf8", override, name, debug, justreturn } = opt;
 
+    debug = !!debug;
 
+    try {
+      // specifying an encoding returns a string instead of a buffer
+      const parsed = parse(fs.readFileSync(path, { encoding }), { debug });
 
+      if (justreturn) {
+        return { parsed };
+      }
+
+      Object.keys(parsed).forEach(function (key) {
+        if (process.env.hasOwnProperty(key)) {
+          // if (dotenv.override) {
+          if (override) {
+            process.env[key] = parsed[key];
+
+            debug && log(`"${key}" with value "${parsed[key]}" was OVERWRITTEN in \`process.env\``);
+          } else {
+            debug &&
+              log(
+                `"${key}" is already defined in \`process.env\` and will NOT be OVERWRITTEN (to force use flag 'override = true')`
+              );
+          }
+        } else {
+          process.env[key] = parsed[key];
+
+          debug && log(`"${key}" with value "${parsed[key]}" in \`process.env\` was created`);
+        }
+      });
+
+      return { parsed };
+    } catch (e) {
+      throw th(`[dotenv][DEBUG] error, parsing file '${path}', label '${name}', error: ` + String(e));
+    }
+  }
+
+  tool.config = config;
+  tool.load = config;
+  tool.parse = parse;
+
+  return tool;
+})();
 
 /**
  * Use like
@@ -243,94 +208,81 @@ const dotenv = (function () {
  * @returns {} - object with all extracted variables
  */
 module.exports = (opt = {}, debug = true, name) => {
+  if (typeof opt === "number") {
+    opt = {
+      deep: opt,
+    };
+  }
 
-    if (typeof opt === 'number') {
+  // console.log('_stack()', _stack())
 
-        opt = {
-            deep: opt,
-        };
+  let {
+    path = pa.dirname(_stack()[2]),
+    envfile = ".env",
+    override = true,
+    deep = 1,
+    startfromlevel = 0,
+    justreturn = false,
+    ...rest
+  } = opt;
+
+  justreturn = !!justreturn;
+
+  if (name) {
+    debug && log(`dotenv-up [${deep}]: '${name}'`, true);
+  }
+
+  if (!Number.isInteger(startfromlevel) || startfromlevel < 0) {
+    throw th(`startfromlevel should be integer >= 0 but it is: ${startfromlevel}`);
+  }
+
+  if (!Number.isInteger(deep) || deep < 0) {
+    throw th(`deep should be integer >= 0 but it is: ${deep}`);
+  }
+
+  if (!(deep > startfromlevel)) {
+    throw th(`deep(${deep}) should be bigger than startfromlevel(${startfromlevel})`);
+  }
+
+  if (debug === false) {
+    delete rest.debug;
+  } else {
+    rest.debug = true;
+  }
+
+  let p = path;
+
+  const stack = [];
+
+  while (startfromlevel < deep) {
+    let pp = p;
+
+    for (let k = 0; k < startfromlevel; k += 1) {
+      pp = pa.dirname(pp);
     }
 
-    // console.log('_stack()', _stack())
+    pp = pa.resolve(pp, envfile);
 
-    let {
-        path            = pa.dirname(_stack()[2]),
-        envfile         = '.env',
-        override        = true,
-        deep            = 1,
-        startfromlevel  = 0,
-        justreturn      = false,
-        ...rest
-    } = opt;
+    const found = fs.existsSync(pp);
 
-    justreturn = !!justreturn;
-
-    if (name) {
-
-        debug && log(`dotenv-up [${deep}]: '${name}'`, true);
+    if (rest.debug === true) {
+      log(`dotenv-up: path '${pp}' found: ` + (found ? "true" : "false"));
     }
 
-    if ( ! Number.isInteger(startfromlevel) || startfromlevel < 0 ) {
+    stack.push(pp);
 
-        throw th(`startfromlevel should be integer >= 0 but it is: ${startfromlevel}`);
+    if (found) {
+      return dotenv.load({
+        ...rest,
+        path: pp,
+        name,
+        override,
+        justreturn,
+      }).parsed;
     }
 
-    if ( ! Number.isInteger(deep) || deep < 0 ) {
+    startfromlevel += 1;
+  }
 
-        throw th(`deep should be integer >= 0 but it is: ${deep}`);
-    }
-
-    if ( ! (deep > startfromlevel) ) {
-
-        throw th(`deep(${deep}) should be bigger than startfromlevel(${startfromlevel})`);
-    }
-
-    if (debug === false) {
-
-        delete rest.debug;
-    }
-    else {
-
-        rest.debug = true;
-    }
-
-    let p = path;
-
-    const stack = [];
-
-    while (startfromlevel < deep) {
-
-        let pp = p;
-
-        for (let k = 0 ; k < startfromlevel ; k += 1 ) {
-
-            pp = pa.dirname(pp);
-        }
-
-        pp = pa.resolve(pp, envfile);
-
-        const found = fs.existsSync(pp);
-
-        if (rest.debug === true) {
-
-            log(`dotenv-up: path '${pp}' found: ` + (found ? 'true' : 'false'));
-        }
-
-        stack.push(pp);
-
-        if (found) {
-
-            return dotenv.load({
-                ...rest,
-                path: pp,
-                name,
-                override,
-                justreturn,
-            }).parsed
-        }
-
-        startfromlevel += 1;
-    }
-
-    throw th(`'${name}': didn't found '${envfile}' under any of those paths: ` + JSON.stringify(stack, null, 4));
-}
+  throw th(`'${name}': didn't found '${envfile}' under any of those paths: ` + JSON.stringify(stack, null, 4));
+};

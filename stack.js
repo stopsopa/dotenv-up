@@ -1,74 +1,74 @@
+const { fileURLToPath } = require("url");
 
-
-global.__stack || Object.defineProperty(global, '__stack', {
+global.__stack ||
+  Object.defineProperty(global, "__stack", {
     get: function tmp() {
-        var orig = Error.prepareStackTrace;
-        Error.prepareStackTrace = function(_, stack){ return stack; };
-        var err = new Error;
-        Error.captureStackTrace(err, tmp);
-        // Error.captureStackTrace(err, arguments.callee); // without 'use strict'
-        var stack = err.stack;
-        Error.prepareStackTrace = orig;
+      var orig = Error.prepareStackTrace;
+      Error.prepareStackTrace = function (_, stack) {
         return stack;
-    }
-});
+      };
+      var err = new Error();
+      Error.captureStackTrace(err, tmp);
+      // Error.captureStackTrace(err, arguments.callee); // without 'use strict'
+      var stack = err.stack;
+      Error.prepareStackTrace = orig;
+      stack = stack.map((line) => {
+        if (/file:\/\/\//.test(line)) {
+          return fileURLToPath(String(line));
+        }
+        return line;
+      });
+      return stack;
+    },
+  });
 
 global.__line = (function () {
+  function rpad(s, n) {
+    typeof n === "undefined" && (n = 5);
 
-    function rpad(s, n) {
-
-        (typeof n === 'undefined') && (n = 5);
-
-        try {
-
-            if (s && s.length && s.length >= n) {
-
-                return s;
-            }
-        }
-        catch (e) {
-            console.log('exception', typeof s, s, e);
-        }
-
-        return String(s + " ".repeat(n)).slice(0, n);
+    try {
+      if (s && s.length && s.length >= n) {
+        return s;
+      }
+    } catch (e) {
+      console.log("exception", typeof s, s, e);
     }
 
-    var tool = function (n) {
+    return String(s + " ".repeat(n)).slice(0, n);
+  }
 
-        if (typeof n === 'undefined') {
+  var tool = function (n) {
+    if (typeof n === "undefined") {
+      let tmp = [];
 
-            let tmp = [];
-
-            for (let i in __stack) {
-
-                if (__stack.hasOwnProperty(i)) {
-
-                    // tmp.push('stack: ' + rpad(i) + ' file:' + __stack[i].getFileName() + ':' + rpad(__stack[i].getLineNumber()) + ' ');
-                    tmp.push(__stack[i].getFileName());
-                }
-            }
-
-            return tmp;
+      for (let i in __stack) {
+        if (__stack.hasOwnProperty(i)) {
+          // tmp.push('stack: ' + rpad(i) + ' file:' + __stack[i].getFileName() + ':' + rpad(__stack[i].getLineNumber()) + ' ');
+          tmp.push(__stack[i].getFileName());
         }
+      }
 
-        (typeof n === 'undefined') && (n = 1);
+      return tmp;
+    }
 
-        if ( ! __stack[n] ) {
+    typeof n === "undefined" && (n = 1);
 
-            return `${n} not in stack: ` + tool(n - 1);
-        }
+    if (!__stack[n]) {
+      return `${n} not in stack: ` + tool(n - 1);
+    }
 
-        const file = __stack[n].getFileName();
+    const file = __stack[n].getFileName();
 
-        if (file === null) {
+    if (file === null) {
+      return "corrected:" + tool(n - 1);
+    }
 
-            return 'corrected:' + tool(n - 1);
-        }
+    return (
+      new Date().toISOString().substring(0, 19).replace("T", " ") + " " + file + ":" + rpad(__stack[n].getLineNumber())
+    );
+  };
 
-        return (new Date()).toISOString().substring(0, 19).replace('T', ' ') + ' ' + file + ':' + rpad(__stack[n].getLineNumber());
-    };
-
-    return tool;
-}());
+  return tool;
+})();
 
 module.exports = __line;
